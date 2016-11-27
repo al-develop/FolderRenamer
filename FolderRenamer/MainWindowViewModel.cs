@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using DevExpress.Mvvm;
+using System.Windows.Input;
 
 namespace FolderRenamer
 {
@@ -39,46 +40,56 @@ namespace FolderRenamer
         }
 
 
-        public DelegateCommand SelectFolderCommand { get; set; }
-        public AsyncCommand RenameCommand { get; set; }
+        public ICommand SelectFolderCommand { get; set; }
+        public ICommand RenameCommand { get; set; }
 
-        public DelegateCommand FindWithoutTagsCommand { get; set; }
+        public ICommand FindWithoutTagsCommand { get; set; }
 
         public MainWindowViewModel()
         {
             SelectFolderCommand = new DelegateCommand(SelectFolder);
             RenameCommand = new AsyncCommand(this.Rename);
-            FindWithoutTagsCommand = new DelegateCommand(this.FindWithoutTags);
+            FindWithoutTagsCommand = new AsyncCommand(this.FindWithoutTags);
 
             CanRename = false;
         }
 
-        private void FindWithoutTags()
+        private async Task FindWithoutTags()
         {
-            Logic logic = new Logic();
-            string filePath = logic.FindWithoutTags(this.FolderPath);
-            Process.Start(filePath);
+            await Task.Run(() =>
+            {
+                Logic logic = new Logic();
+                this.Notification = "Getting Information...";
+                var vm = this;
+                string filePath = logic.FindWithoutTags(this.FolderPath, ref vm);
+                this.Notification = "Done";
+                Process.Start(filePath);
+            });
         }
 
         private async Task Rename()
         {
             if (CanRename == false)
                 return;
-            var vm = this;
-            Logic logic = new Logic();
-            this.Notification = "Processing ...";
-            logic.Rename(this.FolderPath, ref vm);
 
-            if (logic.failedRenames.Count > 0)
+            await Task.Run(() =>
             {
-                this.Notification = "Done, with errors.Check ErroLog.txt for more info";
-                using (var file = new StreamWriter(AppDomain.CurrentDomain.BaseDirectory + "\\ErroLog.txt", true))
+                var vm = this;
+                Logic logic = new Logic();
+                this.Notification = "Processing ...";
+                logic.Rename(this.FolderPath, ref vm);
+
+                if (logic.failedRenames.Count > 0)
                 {
-                    file.WriteLine(String.Join(Environment.NewLine, logic.failedRenames));
+                    this.Notification = "Done, with errors.Check ErroLog.txt for more info";
+                    using (var file = new StreamWriter(AppDomain.CurrentDomain.BaseDirectory + "\\ErroLog.txt", true))
+                    {
+                        file.WriteLine(String.Join(Environment.NewLine, logic.failedRenames));
+                    }
                 }
-            }
-            else
-                this.Notification = "Done";
+                else
+                    this.Notification = "Done";
+            });
         }
 
         private void SelectFolder()

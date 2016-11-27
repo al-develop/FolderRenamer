@@ -146,27 +146,41 @@ namespace FolderRenamer
 
         private string GetYearFromTag()
         {
-            var file = Directory.GetFiles(_path, "*.mp3").FirstOrDefault();
+            try
+            {
+                var file = Directory.GetFiles(_path, "*.mp3").FirstOrDefault();
 
-            if (file == null)
-                return "0";
+                if (file == null)
+                    return "0";
 
-            TagLib.File f = TagLib.File.Create(file);
-            return f.Tag.Year.ToString();
+                TagLib.File f = TagLib.File.Create(file);
+                return f.Tag.Year.ToString();
+            }
+            catch (TagLib.CorruptFileException)
+            {
+                return "";
+            }
         }
 
         private string GetArtistsFromTag()
         {
-            var file = Directory.GetFiles(_path, "*.mp3").FirstOrDefault();
+            try
+            {
+                var file = Directory.GetFiles(_path, "*.mp3").FirstOrDefault();
 
-            if (file == null)
+                if (file == null)
+                    return "";
+
+                TagLib.File f = TagLib.File.Create(file);
+                if (f.Tag.AlbumArtists.Length == 0)
+                    return f.Tag.Performers.ElementAt(0);
+
+                return f.Tag.AlbumArtists.ElementAt(0);
+            }
+            catch (TagLib.CorruptFileException)
+            {
                 return "";
-
-            TagLib.File f = TagLib.File.Create(file);
-            if (f.Tag.AlbumArtists.Length == 0)
-                return f.Tag.Performers.ElementAt(0);
-
-            return f.Tag.AlbumArtists.ElementAt(0);
+            }
         }
 
         private string GetAlbumFromTag()
@@ -216,11 +230,12 @@ namespace FolderRenamer
             }
         }
 
-        public string FindWithoutTags(string folderPath)
+        public string FindWithoutTags(string folderPath, ref MainWindowViewModel vm)
         {
             var subFolders = this.GetSubfolders(folderPath);
             foreach (var folder in subFolders)
             {
+                vm.Notification = folder;
                 var file = Directory.GetFiles(folder, "*.mp3").FirstOrDefault();
                 if (file == null)
                 {
@@ -232,17 +247,29 @@ namespace FolderRenamer
                 }
                 else
                 {
-                    TagLib.File tag = TagLib.File.Create(file);
-                    if (String.IsNullOrEmpty(tag.Tag.Album)
-                        || String.IsNullOrEmpty(tag.Tag.FirstAlbumArtist)
-                        || String.IsNullOrEmpty(tag.Tag.FirstGenre)
-                        || String.IsNullOrEmpty(tag.Tag.FirstPerformer)
-                        || String.IsNullOrEmpty(tag.Tag.Title)
-                        || tag.Tag.Year == 0)
+                    try
                     {
-                        using (var log = new StreamWriter(AppDomain.CurrentDomain.BaseDirectory + "\\FindWithoutName.txt", true))
+                        TagLib.File tag = TagLib.File.Create(file);
+                        if (String.IsNullOrEmpty(tag.Tag.Album)
+                            || String.IsNullOrEmpty(tag.Tag.FirstGenre)
+                            || String.IsNullOrEmpty(tag.Tag.FirstPerformer)
+                            || String.IsNullOrEmpty(tag.Tag.Title)
+                            || tag.Tag.Year == 0)
                         {
-                            log.WriteLine($"{folder}");
+                            using (var log = new StreamWriter(AppDomain.CurrentDomain.BaseDirectory + "\\FindWithoutName.txt", true))
+                            {
+                                log.WriteLine($"{folder}");
+                                continue;
+                            }
+                        }
+                    }
+                    catch (TagLib.CorruptFileException ex)
+                    {
+                        using (var log = new StreamWriter(AppDomain.CurrentDomain.BaseDirectory + "\\FindWithoutName_Error.txt", true))
+                        {
+                            vm.Notification = $"Error occured at {folder}.{Environment.NewLine}Waiting 10 seconds before continuation";
+                            log.WriteLine($"Error on {folder}{Environment.NewLine}{ex.Message}");
+                            Task.Delay(10000);
                             continue;
                         }
                     }

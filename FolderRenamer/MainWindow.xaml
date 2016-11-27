@@ -5,9 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FolderRenamer"
         mc:Ignorable="d"
-        Title="MainWindow"
-        Height="135"
-        Width="525">
+        Title="Folder Renamer"
+        Height="118.986"
+        Width="587.758">
     <Grid>
         <TextBox x:Name="textBox"
                  Height="23"
@@ -23,13 +23,14 @@
                 VerticalAlignment="Top"
                 Width="37"
                 Height="23" />
+        
         <TextBlock x:Name="textBlock"
                    HorizontalAlignment="Left"
                    Margin="10,14,0,0"
                    TextWrapping="Wrap"
                    Text="Folder Path"
                    VerticalAlignment="Top" />
-        <TextBlock x:Name="textBlock3"
+        <!--<TextBlock x:Name="textBlock3"
                    HorizontalAlignment="Left"
                    Margin="10,41,0,0"
                    TextWrapping="Wrap"
@@ -40,31 +41,38 @@
                    Margin="114,41,0,0"
                    TextWrapping="Wrap"
                    Text="{Binding Notification}"
-                   VerticalAlignment="Top" />
+                   VerticalAlignment="Top" />-->
+        
+        <Button x:Name="btnFindWhereNeedTags"
+                Content="Find Paths without tags"
+                Command="{Binding FindWithoutTagsCommand}"
+                Margin="0,0,400,29"
+                Height="20"
+                VerticalAlignment="Bottom"
+                HorizontalAlignment="Right"
+                Width="170" />
         <Button x:Name="button1"
                 Content="Rename"
                 Command="{Binding RenameCommand}"
                 IsEnabled="{Binding CanRename}"
-                Margin="0,0,90,11"
+                Margin="0,0,206,29"
                 HorizontalAlignment="Right"
-                Width="75"
+                Width="170"
                 Height="20"
                 VerticalAlignment="Bottom" />
         <Button x:Name="btnClose"
                 Content="Close"
                 Click="btnClose_Click"
-                Width="75"
+                Width="170"
                 Height="20"
                 VerticalAlignment="Bottom"
                 HorizontalAlignment="Right"
-                Margin="0,0,10,10" />
-        <Button x:Name="btnFindWhereNeedTags"
-                Content="Find Paths without tags"
-                Command="{Binding FindWithoutTagsCommand}"
-                Margin="0,0,170,11"
-                Height="20"
-                VerticalAlignment="Bottom"
-                HorizontalAlignment="Right"
-                Width="169" />
+                Margin="0,0,10,29" />
+
+        <StatusBar VerticalAlignment="Bottom"
+                  Height="23" HorizontalAlignment="Stretch">
+            <StatusBarItem Content="Notification:" />
+            <StatusBarItem Content="{Binding Notification}" />
+        </StatusBar>
     </Grid>
 </Window>
